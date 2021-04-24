@@ -8,7 +8,7 @@
 // disable watchdog,
 // and disable low voltage programming.
 // The rest of fuses are left as default.
-__code uint16_t __at (_CONFIG1) __configword = _INTRC_IO & _WDTE_ON & _LVP_OFF & _MCLRE_OFF;
+__code uint16_t __at (_CONFIG1) __configword = _INTRC_IO & _WDTE_OFF & _LVP_OFF & _MCLRE_OFF;
 
 #define LED_TRIS TRISAbits.TRISA2
 #define LED_PORT PORTAbits.RA2
@@ -16,7 +16,7 @@ __code uint16_t __at (_CONFIG1) __configword = _INTRC_IO & _WDTE_ON & _LVP_OFF &
 #define LED2_PORT PORTAbits.RA1
 
 
-void Timer1Delay(void){     //65ms delay
+static void Timer1Delay(void){     //65ms delay
     T1CON=0x00;             //Timer-1 internal clock, 1:1 prescale
     TMR1H=0x00;             //Count Hight Byte
     TMR1L=0x00;             //Count Low Byte
@@ -26,7 +26,7 @@ void Timer1Delay(void){     //65ms delay
     T1CONbits.TMR1ON=0;              //Switch off timer
 }
 
-void delay(uint16_t ms)
+static void delay(uint16_t ms)
 {
 	for (uint16_t i = ms/65; i>0; --i) {
 		// for (char j = 250; j > 0; --j) {
@@ -54,11 +54,12 @@ void main(void)
 	LED2_PORT = 0; // LED 
 
 	while (1) {
-		delay(500);
+		delay(100);
 		// LED_PORT = 0;
-		// LED2_PORT = 0;
-		delay(500);
+		LED2_PORT = 1;
+		delay(100);
 		// LED_PORT = 1;
-		// LED2_PORT = 1;
+		LED2_PORT = 0;
+		// __asm CLRWDT __endasm;  //clear watchdog timer, or disable in config above
 	}
 }
