@@ -1,0 +1,31 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "process",
+            "command": "c:\\program files\\sdcc\\bin\\sdcc.exe",
+            "args": [
+                "-V",
+                "-mpic14",
+                "-p16f628a",
+                "--use-non-free",
+                "-oobj\\"
+                "${file}",
+            ],"windows": {
+                "options": {
+                    "env": {
+                        //"PATH": "c:\\program files\\sdcc\\bin\\",
+                        //"PATH": "c:\\program files\\gputils\\bin\\"
+                    }
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]   
+}

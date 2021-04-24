@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "pic16f628a.h": "c",
+        "pic14regs.h": "c"
+    }
+}
