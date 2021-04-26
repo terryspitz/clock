@@ -10,17 +10,16 @@
 // The rest of fuses are left as default.
 __code uint16_t __at (_CONFIG1) __configword = _INTRC_IO & _WDTE_OFF & _LVP_OFF & _MCLRE_OFF;
 
-#define LED_TRIS TRISAbits.TRISA2
-#define LED_PORT PORTAbits.RA2
-#define LED2_TRIS TRISAbits.TRISA1
-#define LED2_PORT PORTAbits.RA1
+#define LED_TRIS TRISAbits.TRISA1
+#define LED_PORT PORTAbits.RA1
 
 
-static void Timer1Delay(void){     //65ms delay
-    T1CON=0x00;             //Timer-1 internal clock, 1:1 prescale
-    TMR1H=0x00;             //Count Hight Byte
-    TMR1L=0x00;             //Count Low Byte
-	PIR1bits.TMR1IF = 0;	//Clear flag
+static void Timer1Delay(void){  //1ms delay
+    T1CON=0x00;                      //Timer-1 internal clock, 1:1 prescale
+    // TMR1H=256-1000/256;        //Count Hight Byte
+    TMR1H=252;        //Count Hight Byte
+    TMR1L=256-232;                      //Count Low Byte
+	PIR1bits.TMR1IF = 0;	         //Clear flag
     T1CONbits.TMR1ON=1;              //Run timer
     while(PIR1bits.TMR1IF==0);       //Wait for flag to over flow
     T1CONbits.TMR1ON=0;              //Switch off timer
@@ -28,7 +27,7 @@ static void Timer1Delay(void){     //65ms delay
 
 static void delay(uint16_t ms)
 {
-	for (uint16_t i = ms/65; i>0; --i) {
+	for (uint16_t i = ms; i>0; --i) {
 		// for (char j = 250; j > 0; --j) {
 		// 	__asm nop __endasm;  // Prevent this loop from being optimized away.
 		// }
@@ -36,30 +35,22 @@ static void delay(uint16_t ms)
 	}
 }
 
+static const uint16_t DELAY_MS = 10;
+
 void main(void)
 {
 	CMCON=7;         // Comparators off, all pins digital I/O 
+	LED_PORT = 1; // LED 
 	LED_TRIS = 0; // Pin as output
-	LED_PORT = 1; // LED
-	LED2_TRIS = 0; // Pin as output
-	LED2_PORT = 1; // LED 
-
-	delay(500);
-	LED2_PORT = 0; // LED 
-
-	delay(200);
-	LED2_PORT = 1; // LED 
-
-	delay(200);
-	LED2_PORT = 0; // LED 
+	LED_PORT = 1; // LED 
 
 	while (1) {
-		delay(100);
+		delay(DELAY_MS);
 		// LED_PORT = 0;
-		LED2_PORT = 1;
-		delay(100);
+		LED_PORT = 1;
+		delay(DELAY_MS);
 		// LED_PORT = 1;
-		LED2_PORT = 0;
+		LED_PORT = 0;
 		// __asm CLRWDT __endasm;  //clear watchdog timer, or disable in config above
 	}
 }
