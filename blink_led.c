@@ -10,14 +10,27 @@ __code uint16_t __at (_CONFIG1) __configword =
     & _LVP_OFF         // disable low voltage programming.
     & _MCLRE_OFF;    // disable reset
 
-static void delay(uint16_t ticks){  
+static void delayTimer1(uint32_t ticks){
     T1CON = 0x00;                   //Timer-1 internal clock, 1:1 prescale
-    TMR1H = 0xFF - ticks / 256;    	//timer start Hight Byte
-    TMR1L = 0xFF - ticks % 256;     //timer start Low Byte
-    PIR1bits.TMR1IF = 0;            //Clear overflow flag
+    T1CONbits.T1CKPS1 = 1;          //Timer-1 1:8 prescale
+    T1CONbits.T1CKPS0 = 1;
     T1CONbits.TMR1ON = 1;           //Run timer
-    while(PIR1bits.TMR1IF == 0);    //Wait for flag to overflow
+    for(; ticks>=0x10000; ticks-=0x10000) {
+        TMR1H = 0;                  //timer start Hight Byte
+        TMR1L = 0;                  //timer start Low Byte
+        PIR1bits.TMR1IF = 0;        //Clear overflow flag
+        while(PIR1bits.TMR1IF == 0);//Wait for flag to overflow
+    }
     T1CONbits.TMR1ON = 0;           //Switch off timer
+}
+
+static void delayTimer0(uint8_t ticks){
+    OPTION_REGbits.PSA = 1;         //assign prescaler to WDT; Timer0 is 1:1
+    OPTION_REGbits.T0CS = 0;        //Timer0 internal timer
+    INTCONbits.TMR0IE = 0;          //Timer0 interupt disable
+    TMR0 = 0xFF - ticks;            //timer initial value
+    INTCONbits.TMR0IF = 0;          //Clear overflow flag
+    while(INTCONbits.TMR0IF == 0);  //Wait for flag to overflow
 }
 
 #define LED_TRIS TRISAbits.TRISA2
@@ -32,35 +45,36 @@ static void delay(uint16_t ticks){
 void main(void)
 {
     CMCON = 7;               // Comparators off, all pins digital I/O 
-    OPTION_REGbits.NOT_RBPU = 0; //Enable RB Pull-ups
     __asm nop __endasm;      // NOP, pause while comparators settle
+    OPTION_REGbits.NOT_RBPU = 0; //Enable RB Pull-ups
     LED_TRIS = 0;            // output
     STEP_TRIS = 0;           // output
     SLEEP_TRIS = 0;          // output
     BUTTON_TRIS = 1;         // input
-	const uint16_t delay_ticks = 80;
-	const uint16_t ticks_per_min_rotation = 20 * 150 /30*31; // 60*2 * 
-	uint16_t ticks_per_s = 8000;
-	_Bool led = 0;
-	_Bool step = 0;
+    const uint8_t stepper_ticks = 80;
+    const uint16_t steps_per_min_rotation = 20 * 150 /30*31; // 60*2 * 
+    uint32_t ticks_per_s = 250000;
+    _Bool led = 0;
+    _Bool step = 0;
     while (1) {
-		// SLEEP_PORT = 1;	 //enable stepper
-		// for(uint16_t t = ticks_per_min_rotation; t; --t) {
-		// 	step = !step;
-		// 	STEP_PORT = step;
-		// 	delay(delay_ticks);
-		// }
-		SLEEP_PORT = 0;	 //sleep stepper
+        SLEEP_PORT = 1;     //enable stepper
+        for(uint16_t t = steps_per_min_rotation; t; --t) {
+            step = !step;
+            STEP_PORT = step;
+            delayTimer0(stepper_ticks);
+        }
+        SLEEP_PORT = 0;     //sleep stepper
         if(!BUTTON_PORT) {
             while(!BUTTON_PORT) {}
-			ticks_per_s /= 2;
+            ticks_per_s >>= 1;
         }
-		else
-		{
-			//pause
-			delay(ticks_per_s/2);
-		}
-		led = !led;
+        else
+        {
+            //pause
+            for(uint8_t t = 5; t; --t)
+                delayTimer1(ticks_per_s);
+        }
+        led = !led;
         LED_PORT = led;
     }
 }
