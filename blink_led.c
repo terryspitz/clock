@@ -39,24 +39,26 @@ void main(void)
     SLEEP_TRIS = 0;          // output
     BUTTON_TRIS = 1;         // input
 	const uint16_t delay_ticks = 80;
-	const uint16_t ticks_per_min = 20 * 150 /30*31; // 60*2 * 
+	const uint16_t ticks_per_min_rotation = 20 * 150 /30*31; // 60*2 * 
+	uint16_t ticks_per_s = 8000;
 	_Bool led = 0;
 	_Bool step = 0;
     while (1) {
-		SLEEP_PORT = 1;	 //enable stepper
-		for(uint16_t t = ticks_per_min; t; --t) {
-			step = !step;
-			STEP_PORT = step;
-			delay(delay_ticks);
-		}
+		// SLEEP_PORT = 1;	 //enable stepper
+		// for(uint16_t t = ticks_per_min_rotation; t; --t) {
+		// 	step = !step;
+		// 	STEP_PORT = step;
+		// 	delay(delay_ticks);
+		// }
 		SLEEP_PORT = 0;	 //sleep stepper
         if(!BUTTON_PORT) {
             while(!BUTTON_PORT) {}
+			ticks_per_s /= 2;
         }
-		else {
+		else
+		{
 			//pause
-			for(uint16_t t = ticks_per_min*4; t; --t)
-				delay(delay_ticks);
+			delay(ticks_per_s/2);
 		}
 		led = !led;
         LED_PORT = led;
