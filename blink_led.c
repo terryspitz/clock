@@ -71,10 +71,11 @@ void main(void)
         else
         {
             //pause
-            for(uint8_t t = 5; t; --t)
+            for(uint8_t t = 5; t; --t) {
                 delayTimer1(ticks_per_s);
+                led = !led;
+                LED_PORT = led;
+            }
         }
-        led = !led;
-        LED_PORT = led;
     }
 }
